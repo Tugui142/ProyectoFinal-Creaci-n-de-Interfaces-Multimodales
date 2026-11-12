@@ -1,0 +1,6 @@
+streamlit>=1.40
+paho-mqtt>=2.0
+opencv-python-headless
+numpy
+pandas
+SpeechRecognition
