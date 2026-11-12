@@ -10,16 +10,32 @@ from utils.vision import analizar_grano
 st.set_page_config(page_title="Análisis Visual de Grano", page_icon="🔍", layout="wide")
 bridge = get_bridge()
 COMANDOS = {"Apto": "APTO", "Con Defectos": "DEFECTOS"}
+MODOS = {"Automático": "auto", "Granos individuales": "granos", "Pila de granos": "pila"}
 
 st.title("🔍 Análisis Visual de Grano")
-st.caption("Toma una foto de la muestra sobre un fondo liso. El diagnóstico se envía al circuito de Wokwi.")
+st.caption("Toma o sube una foto de la muestra. El diagnóstico se envía al circuito de Wokwi.")
 
 with st.sidebar:
     st.header("Ajustes")
-    fondo = st.radio("Fondo de la foto", ["Claro", "Oscuro"], horizontal=True)
-    umbral = st.slider("Máx. % de granos defectuosos para «Apto»", 1, 40, 10)
+    modo_txt = st.radio(
+        "Tipo de foto", list(MODOS), index=0,
+        help="Automático: intenta separar granos y, si no puede, evalúa la pila por zonas de color.",
+    )
+    umbral = st.slider("Máx. % de defectos para «Apto»", 1, 40, 10)
+    tolerancia = st.slider(
+        "Tolerancia de color (%)", 10, 60, 30,
+        help="Qué tanto puede variar el brillo de un grano respecto a la mediana antes de marcarlo como defecto.",
+    )
     auto = st.toggle("Publicar a Wokwi automáticamente", value=True)
     st.write("MQTT:", "🟢 conectado" if bridge.connected else "🔴 sin conexión")
+    with st.expander("💡 Consejos para una buena foto"):
+        st.markdown(
+            "- Fondo **liso** (papel blanco o tela oscura), sin texto ni objetos.\n"
+            "- Granos **separados** y bien enfocados; evita que toquen el borde de la foto.\n"
+            "- Luz pareja, sin sombras fuertes ni reflejos.\n"
+            "- Fotos de internet: recorta la zona de granos antes de subirla.\n"
+            "- Los bloques grandes o raros se **descartan** (salen en amarillo)."
+        )
 
 tab_cam, tab_file = st.tabs(["📷 Cámara", "🖼️ Subir imagen"])
 with tab_cam:
@@ -34,23 +50,45 @@ if origen is None:
 
 datos = origen.getvalue()
 img = cv2.imdecode(np.frombuffer(datos, np.uint8), cv2.IMREAD_COLOR)
-res, anotada = analizar_grano(img, fondo_claro=(fondo == "Claro"), umbral_defectos=umbral)
+if img is None:
+    st.error("No pude leer la imagen. Prueba con otro archivo JPG o PNG.")
+    st.stop()
+
+res, anotada = analizar_grano(
+    img, modo=MODOS[modo_txt], tolerancia=tolerancia / 100, umbral_defectos=umbral
+)
+
+if res.get("aviso"):
+    st.info(res["aviso"])
 
 col1, col2 = st.columns([3, 2])
-col1.image(anotada, caption="Verde = grano normal · Rojo = posible defecto", use_container_width=True)
+with col1:
+    t1, t2 = st.tabs(["Resultado", "Segmentación"])
+    leyenda = (
+        "Verde = grano normal · Rojo = posible defecto · Amarillo = descartado"
+        if res["modo"] == "granos"
+        else "Rojo = zonas con color fuera de rango"
+    )
+    t1.image(anotada, caption=leyenda, use_container_width=True)
+    t2.image(res["mascara"], caption="Lo que la app considera grano (blanco) y cortes entre granos (rojo)",
+             use_container_width=True)
+
 with col2:
     if res["estado"] is None:
         st.warning(res["resumen"])
         st.stop()
     (st.success if res["estado"] == "Apto" else st.error)(f"### {res['estado']}")
-    st.metric("Granos detectados", res["granos"])
-    st.metric("Granos con defectos", f"{res['pct_defectos']:.1f} %")
+    if res["modo"] == "granos":
+        st.metric("Granos analizados", res["granos"])
+        st.metric("Granos con defectos", f"{res['pct_defectos']:.1f} %")
+    else:
+        st.metric("Superficie fuera de rango", f"{res['pct_defectos']:.1f} %")
     st.metric("Uniformidad de color", f"{res['uniformidad']:.0f} / 100")
     st.markdown(res["resumen"])
 
 # ---------- Comando MQTT hacia Wokwi ----------
 cmd = COMANDOS[res["estado"]]
-huella = hashlib.md5(datos).hexdigest() + fondo + str(umbral)
+huella = hashlib.md5(datos).hexdigest() + modo_txt + str(umbral) + str(tolerancia)
 if auto and st.session_state.get("ultima_pub") != huella:
     if bridge.publicar_comando(cmd):
         st.session_state.ultima_pub = huella
