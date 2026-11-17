@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "author": "Coffee-Tracker IoT",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-dht22", "id": "dht1", "top": -105, "left": 177, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": 94.7, "left": 259, "attrs": {} },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -3.2,
+      "left": 370.4,
+      "attrs": { "pins": "i2c" }
+    },
+    { "type": "wokwi-led", "id": "ledG", "top": 230, "left": 150, "attrs": { "color": "green" } },
+    { "type": "wokwi-led", "id": "ledR", "top": 230, "left": 200, "attrs": { "color": "red" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "rG",
+      "top": 300,
+      "left": 140,
+      "rotate": 90,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rR",
+      "top": 300,
+      "left": 190,
+      "rotate": 90,
+      "attrs": { "value": "220" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "dht1:VCC", "esp:3V3", "red", [] ],
+    [ "dht1:GND", "esp:GND.1", "black", [] ],
+    [ "dht1:SDA", "esp:15", "green", [] ],
+    [ "pot1:VCC", "esp:3V3", "red", [] ],
+    [ "pot1:GND", "esp:GND.1", "black", [] ],
+    [ "pot1:SIG", "esp:34", "orange", [] ],
+    [ "lcd1:GND", "esp:GND.1", "black", [] ],
+    [ "lcd1:VCC", "esp:5V", "red", [] ],
+    [ "lcd1:SDA", "esp:21", "blue", [] ],
+    [ "lcd1:SCL", "esp:22", "purple", [] ],
+    [ "ledG:A", "rG:1", "green", [] ],
+    [ "rG:2", "esp:26", "green", [] ],
+    [ "ledG:C", "esp:GND.1", "black", [] ],
+    [ "ledR:A", "rR:1", "red", [] ],
+    [ "rR:2", "esp:27", "red", [] ],
+    [ "ledR:C", "esp:GND.1", "black", [] ]
+  ],
+  "dependencies": {}
+}
