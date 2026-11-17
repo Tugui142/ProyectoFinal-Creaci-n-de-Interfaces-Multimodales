@@ -18,3 +18,7 @@ streamlit run app.py
 3. El prefijo MQTT ya viene configurado (`gutiq123/coffeetracker`). Si lo cambias, hazlo igual en `utils/mqtt_bridge.py` y en el sketch de Wokwi.
 
 Nota: en la nube el archivo `data/lotes.csv` es temporal (se borra al reiniciar); descárgalo desde la página de lotes.
+
+## ENLACES
+https://wokwi.com/projects/480452660983763969
+https://proyectofinal-creaci-n-de-interfaces-multimodales-32snmeewcxnl.streamlit.app/
