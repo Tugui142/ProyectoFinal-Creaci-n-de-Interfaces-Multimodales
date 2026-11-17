@@ -20,5 +20,5 @@ streamlit run app.py
 Nota: en la nube el archivo `data/lotes.csv` es temporal (se borra al reiniciar); descárgalo desde la página de lotes.
 
 ## ENLACES
-https://wokwi.com/projects/480452660983763969
-https://proyectofinal-creaci-n-de-interfaces-multimodales-32snmeewcxnl.streamlit.app/
+1. https://wokwi.com/projects/480452660983763969
+2. https://proyectofinal-creaci-n-de-interfaces-multimodales-32snmeewcxnl.streamlit.app/
